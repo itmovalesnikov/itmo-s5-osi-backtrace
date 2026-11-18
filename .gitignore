@@ -18,3 +18,25 @@ compile_commands.events.json
 
 # Python
 __pycache__/
+
+os-course/
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.bbl
+*.blg
+*.nav
+*.snm
+*.vrb
+*.pdf
+
+# Personal notes
+backtrace-report.md
+xv6-overview.md
+REPORT_RULES.md

@@ -134,12 +134,67 @@ printk(char *fmt, ...)
   return 0;
 }
 
+int
+kernel_backtrace(uint64 *addresses, int capacity)
+{
+  uint64 frame = (uint64)__builtin_frame_address(0);
+  int count = 0;
+
+  while (count < capacity && frame >= 16 && (frame & 15) == 0) {
+    uint64 next = *(uint64 *)(frame - 16);
+    addresses[count++] = *(uint64 *)(frame - 8);
+    if (next <= frame)
+      break;
+    frame = next;
+  }
+  return count;
+}
+
+int
+user_backtrace(struct proc *process, uint64 *addresses, int capacity)
+{
+  uint64 frame = process->trapframe->s0;
+  int count = 0;
+
+  if (capacity > 0 && process->trapframe->ra != 0)
+    addresses[count++] = process->trapframe->ra;
+  while (count < capacity && frame >= 16 && frame <= process->sz &&
+         (frame & 15) == 0) {
+    uint64 physical = walkaddr(process->pagetable, frame - 16);
+    uint64 next, address;
+    if (physical == 0)
+      break;
+    physical += (frame - 16) % PGSIZE;
+    next = *(uint64 *)physical;
+    address = *(uint64 *)(physical + 8);
+    if (address == 0 || next <= frame || next > process->sz ||
+        (next & 15) != 0)
+      break;
+    addresses[count++] = address;
+    frame = next;
+  }
+  return count;
+}
+
+void
+print_backtrace(char *label, uint64 *addresses, int count)
+{
+  printk("%s backtrace:\n", label);
+  for (int index = 0; index < count; index++)
+    printk("%p\n", (void *)addresses[index]);
+}
+
 void
 panic(char *s)
 {
+  uint64 addresses[32];
+  int count;
+
   panicking = 1;
   printk("panic: ");
   printk("%s\n", s);
+  count = kernel_backtrace(addresses, 32);
+  print_backtrace("kernel", addresses, count);
   panicked = 1; // freeze uart output from other CPUs
   for (;;)
     ;

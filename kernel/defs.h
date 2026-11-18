@@ -78,6 +78,9 @@ int             pipewrite(struct pipe*, uint64, int);
 int             printk(char*, ...) __attribute__ ((format (printf, 1, 2)));
 void            panic(char*) __attribute__((noreturn));
 void            printkinit(void);
+int             kernel_backtrace(uint64 *, int);
+int             user_backtrace(struct proc *, uint64 *, int);
+void            print_backtrace(char *, uint64 *, int);
 
 // proc.c
 int             cpuid(void);

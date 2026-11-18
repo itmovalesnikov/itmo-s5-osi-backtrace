@@ -8,6 +8,17 @@
 #include "vm.h"
 
 uint64
+sys_backtrace(void)
+{
+  uint64 addresses[32];
+  int count = kernel_backtrace(addresses, 32);
+  print_backtrace("kernel", addresses, count);
+  count = user_backtrace(myproc(), addresses, 32);
+  print_backtrace("user", addresses, count);
+  return 0;
+}
+
+uint64
 sys_exit(void)
 {
   int n;
